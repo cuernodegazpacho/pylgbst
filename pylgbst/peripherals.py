@@ -16,6 +16,8 @@ from pylgbst.messages import (
 )
 from pylgbst.utilities import queue, str2hex, usbyte, ushort, usint, abs_scaled_100
 
+LEFT = "LEFT"
+
 log = logging.getLogger("peripherals")
 
 # COLORS
@@ -865,14 +867,21 @@ class Button(Peripheral):
 
 class RemoteButton(Peripheral):
 
+    LEFT = "LEFT"
+    RIGHT = "RIGHT"
+    PLUS = "PLUS"
+    RED = "RED"
+    MINUS = "MINUS"
+    RELEASE = "RELEASE"
+
     # this only works with modes rckey (0), keyr (1), and keya (2) as in
     # https://virantha.github.io/bricknil/lego_api/lego.html#remote-buttons
-    button_sets = {0: "LEFT",
-                   1: "RIGHT"}
-    button_events = {b'\x01': "PLUS",
-                     b'\x7f': "RED",
-                     b'\xff': "MINUS",
-                     b'\x00': "RELEASE"}
+    button_sets = {0: LEFT,
+                   1: RIGHT}
+    button_events = {b'\x01': PLUS,
+                     b'\x7f': RED,
+                     b'\xff': MINUS,
+                     b'\x00': RELEASE}
 
     def __init__(self, parent, port):
         super().__init__(parent, port)

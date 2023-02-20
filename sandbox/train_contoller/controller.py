@@ -3,62 +3,80 @@ import logging
 from time import sleep
 from pynput import keyboard
 
-from pylgbst.hub import SmartHub
-from pylgbst.peripherals import Voltage
+from pylgbst.hub import SmartHub, RemoteHandset
+from pylgbst.peripherals import Voltage, RemoteButton
 
-logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.DEBUG)
 
-class TrainController:
+class Train:
     '''
-    Basic train controller.
+    Encapsulates details of a Train. For now, it keeps tabs on its motor power
+    setting, as well as battery voltage and headlights status (if so equipped).
 
-    For now, it accepts keyboard commands that replace the remote handset buttons functionality.
-    It also reports voltage and current at stdout.
+    This class also reports voltage and current at stdout.
+
+    :param address: UUID of the train's internal hub
+
+    :ivar hub: the train's internal hub
+    :ivar power: the current motor power level
     '''
+    def __init__(self, address='86996732-BF5A-433D-AACE-5611D4C6271D'): # test hub
+        self.hub = SmartHub(address=address)
 
-    def get_keypresses(self, callback):
-        keyboard_listener = keyboard.Listener(on_press=callback)
-        keyboard_listener.start()
+        self.power = 0.0
 
-        # self.hub = SmartHub(address='F88800F6-F39B-4FD2-AFAA-DD93DA2945A6')   # train hub
-        # self.motor = self.hub.port_A
+    def up_speed(self):
+        self.power = min(self.power + 0.1, 1.0)
+        self._set_motor_power()
 
-    # def run(self):
-    #     try:
-    #         self.motor.power()bvg
-    #         sleep(3)
-    #         self.motor.stop()
-    #         sleep(1)
-    #         self.motor.power(param=0.2)
-    #         sleep(3)
-    #         self.motor.stop()
-    #         sleep(1)
-    #         self.motor.power(param=-0.2)
-    #         sleep(3)
-    #         self.motor.stop()
-    #         sleep(3)
-    #     finally:
-    #         self.hub.disconnect()
+    def down_speed(self):
+        self.power = max(self.power - 0.1, -1.0)
+        self._set_motor_power()
+
+    def stop(self):
+        self.power = 0.0
+        self._set_motor_power()
+
+    def _set_motor_power(self):
+        self.hub.port_A.power(param=self.power)
 
 
 
-# Start Controller
-t = TrainController()
+train = Train()
 
-# start listening to keyboard presses. Keyboard keys act as replacements for the
-# Lego remote handset keys (until support for it is implemented in pylgbst).
-def keyboard_press_callback(key):
-    # Here we will update a instance variable that contains the train
-    # motor duty cycle fraction (aka "power"). It may also update the
-    # headlight power level from port B, if there is one installed.
-    # Other threads in the code may want to update the motor power too,
-    # so we need perhaps to use a semaphore or lock mechanism.
-    print('{} was pressed'.format(key))
+# wait a few seconds until the train hub connects. As soon as it connects, press
+# the green button on the remote handset. As soon as it connects, the control
+# loop starts running.
+sleep(5)
+handset = RemoteHandset(address='5D319849-7D59-4EBB-A561-0C37C5EF8DCD')  # train handset
 
-t.get_keypresses(keyboard_press_callback)
+# actions associated to each handset button
+actions = {
+    RemoteButton.PLUS: train.up_speed,
+    RemoteButton.MINUS: train.down_speed,
+    RemoteButton.RED: train.stop,
+}
+
+# handset callback handles most of the interactive logic
+def handset_callback(button, set):
+
+    # ignore the right buttons and all button release actions.
+    if set == RemoteButton.RIGHT or button == RemoteButton.RELEASE:
+        return
+
+    # action on train speed
+    actions[button]()
+
+
+# we can either have one single callback and handle the button set in the
+# callback, or have two separate callbacks, one associated to each button
+# set from the start. Since we are handling two trains, each one on one
+# side of the handset, the one-callback approach prevents code duplication.
+handset.port_A.subscribe(handset_callback)
+handset.port_B.subscribe(handset_callback)
 
 # Dummy main execution thread.
-for n in range(30):
+while True:
     print("@@@@ controller.py 53: " )
     sleep(1)
 

@@ -404,7 +404,7 @@ class SmartHub(Hub):
                 self.voltage = self.peripherals[port]
 
 
-class HandsetRemote(Hub):
+class RemoteHandset(Hub):
     """
     Class implementing remote handset specifics
 
