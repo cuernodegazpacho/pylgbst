@@ -87,15 +87,15 @@ def handset_callback(button, set):
 
 # we can either have one single callback and handle the button set in the
 # callback, or have two separate callbacks, one associated with each button
-# set from the start. Since we are handling two trains, each one on one
-# side of the handset, the one-callback approach prevents code duplication.
+# set from the start. Since we are handling two trains identically, each one
+# on one side of the handset, the one-callback approach prevents code duplication.
 handset.port_A.subscribe(handset_callback)
 handset.port_B.subscribe(handset_callback)
 
 # Dummy main execution thread.
 while True:
     print("@@@@ controller.py 53: " )
-    sleep(1)
+    sleep(5)
 
 # since this is an infinite loop, we don't care about unsubscribing from anything
 
