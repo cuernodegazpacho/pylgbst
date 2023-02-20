@@ -50,13 +50,10 @@ class Train:
         self.hub.port_A.power(param=self.power)
 
 
-
-
-
-
 train = Train("T 1", report=True)
 
-# wait a few seconds until the train hub connects. As soon as it connects, press
+# Correct startup sequence requires that the train hub be connected first.
+# Wait a few seconds until the train hub connects. As soon as it connects, press
 # the green button on the remote handset. As soon as it connects, the control
 # loop starts running.
 sleep(5)
