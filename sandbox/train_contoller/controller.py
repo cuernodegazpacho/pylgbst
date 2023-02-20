@@ -77,7 +77,7 @@ speed_actions = {
 # handset callback handles most of the interactive logic
 def handset_callback(button, set):
 
-    # ignore the right buttons and all button release actions.
+    # ignore the right side buttons, and all button release actions.
     if set == RemoteButton.RIGHT or button == RemoteButton.RELEASE:
         return
 
