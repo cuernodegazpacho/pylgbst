@@ -27,12 +27,20 @@ class Train:
         self.power = 0.0
 
         if report:
+            self.voltage = 0.
+            self.current = 0.
+            def _print_values():
+                print("%s  voltage %5.2f  current %6.3f" % (self.name, self.voltage, self.current))
+
             def _report_voltage(value):
-                print("%s voltage %6.3f" % (self.name, value))
-            self.hub.voltage.subscribe(_report_voltage, mode=Voltage.VOLTAGE_L, granularity=5)
+                self.voltage = value
+                _print_values()
             def _report_current(value):
-                print("%s current %6.3f" % (self.name, value))
-            self.hub.current.subscribe(_report_current, mode=Current.CURRENT_L, granularity=5)
+                self.current = value
+                _print_values()
+
+            self.hub.voltage.subscribe(_report_voltage, mode=Voltage.VOLTAGE_L, granularity=6)
+            self.hub.current.subscribe(_report_current, mode=Current.CURRENT_L, granularity=15)
 
     def up_speed(self):
         self.power = min(self.power + 0.1, 1.0)
@@ -50,7 +58,7 @@ class Train:
         self.hub.port_A.power(param=self.power)
 
 
-train = Train("T 1", report=True)
+train = Train("Train 1", report=True)
 
 # Correct startup sequence requires that the train hub be connected first.
 # Wait a few seconds until the train hub connects. As soon as it connects, press
