@@ -79,9 +79,9 @@ class SimpleTrain:
         self.motor.power(param=0.)
         self._set_headlight_brightness()
 
-    def _bump_motor_power(self, sense):
-        self.power_index = min(self.power_index + 1, 10)
-        duty_cycle = self.motor_power.get_power(self.power_index) * sense
+    def _bump_motor_power(self, step):
+        self.power_index = max(min(self.power_index + step, 10), -10)
+        duty_cycle = self.motor_power.get_power(self.power_index)
         self.motor.power(param=duty_cycle)
 
     def _set_headlight_brightness(self, ):
@@ -101,22 +101,17 @@ class MotorPower:
     train at a given speed. This class translates the stepwise linear sequence
     of handset button presses to useful duty cycle values, using a lookup table.
     '''
-    duty = {0: 0.0,
-            1: 0.2,
-            2: 0.25,
-            3: 0.3,
-            4: 0.4,
-            5: 0.5,
-            6: 0.6,
-            7: 0.7,
-            8: 0.8,
-            9: 0.9,
-           10: 1.0}
+    duty = {
+        0: 0.0,  1: 0.2,  2: 0.25,  3: 0.3,  4: 0.4,  5: 0.5,
+        6: 0.6,  7: 0.7,  8: 0.8,  9: 0.9, 10: 1.0,
+        -1: -0.2, -2: -0.25, -3: -0.3, -4: -0.4, -5: -0.5,
+        -6: -0.6, -7: -0.7,  -8: -0.8, -9: -0.9, -10: -1.0,
+    }
 
     def get_power(self, index):
         return self.duty[index]
 
-# default address references the test hub
+# default UUID address references the test hub
 train = SimpleTrain("Train 2", report=True)
 
 # train hub allows control over the LED headlight.
