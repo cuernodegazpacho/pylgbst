@@ -1,17 +1,22 @@
 import time
 import logging
+from threading import Timer
 from time import sleep
 from pynput import keyboard
 
 from pylgbst.hub import SmartHub, RemoteHandset
-from pylgbst.peripherals import Voltage, Current, RemoteButton
+from pylgbst.peripherals import Voltage, Current, LEDLight, RemoteButton
+
+MINIMUM_POWER = 0.2
+
 
 # logging.basicConfig(level=logging.DEBUG)
 
 class SimpleTrain:
     '''
     Encapsulates details of a Train. A simple train is a train *not* equipped
-    with a sensor. It may or may not have a headlight.
+    with a sensor. It may or may not have a headlight. If it does, the headlight
+    brightness is controlled by the motor power setting.
 
     For now, an instance of this class keeps tabs on the motor power
     setting, as well as battery and headlights status (if so equipped).
@@ -33,15 +38,15 @@ class SimpleTrain:
         self.hub = SmartHub(address=address)
 
         self.name = name
-        self.motor = self.hub.port_A
         self.power = 0.0
         self.voltage = 0.
         self.current = 0.
+        self.motor = self.hub.port_A
+        self.headlight = None
 
-        #TODO find headlight and turn it on/off at maximum when motor is on/off
-        # turn it off after a 10s delay.
-        # turn it on when motor departs from zero, but with a small (0.2s?) delay
-        # between turning the light and actually starting the motor.
+        if isinstance(self.hub.port_B, LEDLight):
+            self.headlight = self.hub.port_B
+            self.headlight_brightness = self.headlight.brightness
 
         if report:
             self._start_report()
@@ -64,17 +69,27 @@ class SimpleTrain:
     def up_speed(self):
         self.power = min(self.power + 0.1, 1.0)
         self._set_motor_power()
+        self._set_headlight_brightness()
 
     def down_speed(self):
         self.power = max(self.power - 0.1, -1.0)
         self._set_motor_power()
+        self._set_headlight_brightness()
 
     def stop(self):
         self.power = 0.0
         self._set_motor_power()
+        self._set_headlight_brightness()
 
     def _set_motor_power(self):
         self.motor.power(param=self.power)
+
+    def _set_headlight_brightness(self, ):
+        if self.headlight is not None:
+            brightness = 0
+            if self.power != 0.0:
+                brightness = 100
+            self.headlight.set_brightness(brightness)
 
 
 train = SimpleTrain("Train 2", report=True) # default address references the test hub
