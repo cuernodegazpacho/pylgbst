@@ -7,10 +7,8 @@ from pynput import keyboard
 from pylgbst.hub import SmartHub, RemoteHandset
 from pylgbst.peripherals import Voltage, Current, LEDLight, RemoteButton
 
-MINIMUM_POWER = 0.2
-
-
 # logging.basicConfig(level=logging.DEBUG)
+
 
 class SimpleTrain:
     '''
@@ -18,8 +16,8 @@ class SimpleTrain:
     with a sensor. It may or may not have a headlight. If it does, the headlight
     brightness is controlled by the motor power setting.
 
-    For now, an instance of this class keeps tabs on the motor power
-    setting, as well as battery and headlights status (if so equipped).
+    For now, an instance of this class keeps tabs on the motor power setting, as
+    well as battery and headlights status (if so equipped).
 
     This class also reports voltage and current at stdout.
 
@@ -29,7 +27,7 @@ class SimpleTrain:
 
     :ivar hub: the train's internal hub
     :ivar motor: references the train's motor
-    :ivar power: motor power level
+    :ivar power_index: motor power level
     :ivar voltage: populated only when report=True
     :ivar current: populated only when report=True
     '''
@@ -37,8 +35,10 @@ class SimpleTrain:
 
         self.hub = SmartHub(address=address)
 
+        self.motor_power = MotorPower()
+        self.power_index = 0
+
         self.name = name
-        self.power = 0.0
         self.voltage = 0.
         self.current = 0.
         self.motor = self.hub.port_A
@@ -67,33 +67,59 @@ class SimpleTrain:
         self.hub.current.subscribe(_report_current, mode=Current.CURRENT_L, granularity=15)
 
     def up_speed(self):
-        self.power = min(self.power + 0.1, 1.0)
-        self._set_motor_power()
+        self._bump_motor_power(1)
         self._set_headlight_brightness()
 
     def down_speed(self):
-        self.power = max(self.power - 0.1, -1.0)
-        self._set_motor_power()
+        self._bump_motor_power(-1)
         self._set_headlight_brightness()
 
     def stop(self):
-        self.power = 0.0
-        self._set_motor_power()
+        self.power_index = 0
+        self.motor.power(param=0.)
         self._set_headlight_brightness()
 
-    def _set_motor_power(self):
-        self.motor.power(param=self.power)
+    def _bump_motor_power(self, sense):
+        self.power_index = min(self.power_index + 1, 10)
+        duty_cycle = self.motor_power.get_power(self.power_index) * sense
+        self.motor.power(param=duty_cycle)
 
     def _set_headlight_brightness(self, ):
         if self.headlight is not None:
             brightness = 0
-            if self.power != 0.0:
+            if self.power_index != 0:
                 brightness = 100
             self.headlight.set_brightness(brightness)
 
 
-train = SimpleTrain("Train 2", report=True) # default address references the test hub
-# train hub allows handling the LED headlight.
+class MotorPower:
+    '''
+    Translator between handset button clicks and actual motor power settings.
+
+    The DC train motor seems to have some non-linearities in between its duty
+    cycle (aka "power") and actual power, measured by its capacity to move the
+    train at a given speed. This class translates the stepwise linear sequence
+    of handset button presses to useful duty cycle values, using a lookup table.
+    '''
+    duty = {0: 0.0,
+            1: 0.2,
+            2: 0.25,
+            3: 0.3,
+            4: 0.4,
+            5: 0.5,
+            6: 0.6,
+            7: 0.7,
+            8: 0.8,
+            9: 0.9,
+           10: 1.0}
+
+    def get_power(self, index):
+        return self.duty[index]
+
+# default address references the test hub
+train = SimpleTrain("Train 2", report=True)
+
+# train hub allows control over the LED headlight.
 # train = SimpleTrain("Train 1", report=True, address='F88800F6-F39B-4FD2-AFAA-DD93DA2945A6')
 
 # Correct startup sequence requires that the train hub be connected first.
@@ -130,7 +156,7 @@ def handset_callback(button, set):
 handset.port_A.subscribe(handset_callback)
 handset.port_B.subscribe(handset_callback)
 
-# Dummy main execution thread. All actions take place in the event thread.
+# Dummy main execution thread. All actions take place in the event thread instead.
 while True:
     pass
 
