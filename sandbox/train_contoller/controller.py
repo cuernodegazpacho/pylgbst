@@ -1,3 +1,4 @@
+import sys
 import time
 import logging
 from threading import Timer
@@ -53,7 +54,8 @@ class SimpleTrain:
 
     def _start_report(self):
         def _print_values():
-            print("%s  voltage %5.2f  current %6.3f" % (self.name, self.voltage, self.current))
+            print("\r%s  voltage %5.2f  current %6.3f" % (self.name, self.voltage, self.current), end='')
+            sys.stdout.flush()
 
         def _report_voltage(value):
             self.voltage = value
@@ -86,7 +88,7 @@ class SimpleTrain:
 
     def _set_headlight_brightness(self, ):
         if self.headlight is not None:
-            brightness = 0
+            brightness = 10
             if self.power_index != 0:
                 brightness = 100
             self.headlight.set_brightness(brightness)
@@ -112,10 +114,10 @@ class MotorPower:
         return self.duty[index]
 
 # default UUID address references the test hub
-train = SimpleTrain("Train 2", report=True)
+# train = SimpleTrain("Train 2", report=True)
 
 # train hub allows control over the LED headlight.
-# train = SimpleTrain("Train 1", report=True, address='F88800F6-F39B-4FD2-AFAA-DD93DA2945A6')
+train = SimpleTrain("Train 1", report=True, address='F88800F6-F39B-4FD2-AFAA-DD93DA2945A6')
 
 # Correct startup sequence requires that the train hub be connected first.
 # Wait a few seconds until the train hub connects. As soon as it connects, press
