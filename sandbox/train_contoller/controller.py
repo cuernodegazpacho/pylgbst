@@ -86,12 +86,16 @@ class SimpleTrain:
         duty_cycle = self.motor_power.get_power(self.power_index)
         self.motor.power(param=duty_cycle)
 
-    def _set_headlight_brightness(self, ):
+    def _set_headlight_brightness(self):
         if self.headlight is not None:
             brightness = 10
             if self.power_index != 0:
                 brightness = 100
-            self.headlight.set_brightness(brightness)
+                self.headlight.set_brightness(brightness)
+            else:
+                # dim headlight after delay
+                t = Timer(10, self.headlight.set_brightness, [brightness])
+                t.start()
 
 
 class MotorPower:
