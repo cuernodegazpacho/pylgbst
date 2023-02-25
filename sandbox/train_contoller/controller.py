@@ -44,6 +44,7 @@ class SimpleTrain:
         self.current = 0.
         self.motor = self.hub.port_A
         self.headlight = None
+        self.headlight_thread = None
 
         if isinstance(self.hub.port_B, LEDLight):
             self.headlight = self.hub.port_B
@@ -89,13 +90,19 @@ class SimpleTrain:
     def _set_headlight_brightness(self):
         if self.headlight is not None:
             brightness = 10
+            self._cancel_headlight_thread()
             if self.power_index != 0:
                 brightness = 100
                 self.headlight.set_brightness(brightness)
             else:
                 # dim headlight after delay
-                t = Timer(10, self.headlight.set_brightness, [brightness])
-                t.start()
+                self.headlight_thread = Timer(10, self.headlight.set_brightness, [brightness])
+                self.headlight_thread.start()
+
+    def _cancel_headlight_thread(self):
+        if self.headlight_thread is not None:
+            self.headlight_thread.cancel()
+            self.headlight_thread = None
 
 
 class MotorPower:
@@ -108,9 +115,9 @@ class MotorPower:
     of handset button presses to useful duty cycle values, using a lookup table.
     '''
     duty = {
-        0: 0.0,  1: 0.2,  2: 0.25,  3: 0.3,  4: 0.4,  5: 0.5,
+        0: 0.0,  1: 0.3,  2: 0.35,  3: 0.4,  4: 0.45,  5: 0.5,
         6: 0.6,  7: 0.7,  8: 0.8,  9: 0.9, 10: 1.0,
-        -1: -0.2, -2: -0.25, -3: -0.3, -4: -0.4, -5: -0.5,
+        -1: -0.3, -2: -0.35, -3: -0.4, -4: -0.45, -5: -0.5,
         -6: -0.6, -7: -0.7,  -8: -0.8, -9: -0.9, -10: -1.0,
     }
 
