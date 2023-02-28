@@ -198,7 +198,7 @@ class Peripheral:
             info['possible_mode_combinations'] = mode_combinations.possible_mode_combinations
 
         info["modes"] = []
-        for mode in range(256):
+        for mode in range(13):
             info["modes"].append(self._describe_mode(mode))
 
         for mode in mode_info.output_modes:
@@ -693,9 +693,12 @@ class VisionSensor(Peripheral):
             count = usint(data, 0)
             return count,
         elif self._port_mode.mode == self.COLOR_RGB:
-            val1 = int(255 * ushort(data, 0) / 1023.0)
-            val2 = int(255 * ushort(data, 2) / 1023.0)
-            val3 = int(255 * ushort(data, 4) / 1023.0)
+            # val1 = int(255 * ushort(data, 0) / 1023.0)
+            # val2 = int(255 * ushort(data, 2) / 1023.0)
+            # val3 = int(255 * ushort(data, 4) / 1023.0)
+            val1 = float(ushort(data, 0))
+            val2 = float(ushort(data, 2))
+            val3 = float(ushort(data, 4))
             return val1, val2, val3
         elif self._port_mode.mode == self.DEBUG:
             val1 = 10 * ushort(data, 0) / 1023.0
