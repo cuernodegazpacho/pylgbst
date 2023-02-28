@@ -368,12 +368,13 @@ class SmartHub(Hub):
         self.port_B = None
         self.current = None
         self.voltage = None
+        self.vision_sensor = None
 
         self._wait_for_devices()
 
     def _wait_for_devices(self, get_dev_set=None):
         if not get_dev_set:
-            get_dev_set = lambda: (self.led, self.current, self.voltage)
+            get_dev_set = lambda: (self.port_A, self.port_B, self.led, self.current, self.voltage)
 
         for num in range(0, 100):
             devices = get_dev_set()
@@ -402,6 +403,9 @@ class SmartHub(Hub):
                 self.current = self.peripherals[port]
             elif port == self.PORT_VOLTAGE:
                 self.voltage = self.peripherals[port]
+
+            if type(self.peripherals[port]) == VisionSensor:
+                self.vision_sensor = self.peripherals[port]
 
 
 class RemoteHandset(Hub):
